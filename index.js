@@ -1,6 +1,5 @@
-// === Constants ===
 const BASE = "https://fsa-crud-2aa9294fe819.herokuapp.com/api";
-const COHORT = ""; // Make sure to change this!
+const COHORT = "/2505-ftb-ct-web-pt"; // Make sure to change this!
 const API = BASE + COHORT;
 
 // === State ===
@@ -85,6 +84,22 @@ function PartyList() {
   return $ul;
 }
 
+const deleteParty = async (id) => {
+  try {
+    const response = await fetch(API + "/events/" + id, {
+      method: "DELETE",
+    });
+
+    await getParties();
+    render();
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const clickDelete = async () => {
+  await deleteParty(selectedParty.id);
+};
 /** Detailed information about the selected party */
 function SelectedParty() {
   if (!selectedParty) {
@@ -102,8 +117,10 @@ function SelectedParty() {
     <address>${selectedParty.location}</address>
     <p>${selectedParty.description}</p>
     <GuestList></GuestList>
+    <button class="deleter"> Delete Party</button>
   `;
   $party.querySelector("GuestList").replaceWith(GuestList());
+  $party.querySelector(".deleter").addEventListener("click", clickDelete);
 
   return $party;
 }
@@ -128,6 +145,90 @@ function GuestList() {
   return $ul;
 }
 
+const addParty = async (e) => {
+  e.preventDefault();
+  console.log(e);
+  console.log(e.target[0]);
+  console.log(e.target[0].value);
+  console.log(e.target[1].value);
+  console.log(e.target[2].value);
+  console.log(e.target[3].value);
+
+  const givenDate = e.target[2].value;
+  const isoDate = new Date(givenDate).toISOString();
+  const obj = {
+    name: e.target[0].value,
+    description: e.target[1].value,
+    date: isoDate,
+    location: e.target[3].value,
+  };
+
+  try {
+    const response = await fetch(API + "/events", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(obj),
+    });
+    console.log(response);
+    const data = await response.json();
+    console.log(data);
+
+    await getParties();
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const setForm = () => {
+  const $form = document.createElement("form");
+  $form.innerHTML = `
+      <div class="form-group">
+        <label for="inputName">Name</label>
+        <input
+          type="text"
+          class="form-control"
+          id="exampleInputEmail1"
+          placeholder="Enter name"
+        />
+      </div>
+      <div class="form-group">
+        <label for="inputDesc">Description</label>
+        <input
+          type="text"
+          class="form-control"
+          id="exampleInputPassword1"
+          placeholder="Enter Description"
+        />
+      </div>
+      <div class="form-group">
+        <label for="inputDate">Date</label>
+        <input
+          type="date"
+          class="form-control"
+          id="inputDate"
+          placeholder="mm/dd/yyyy"
+        />
+      </div>
+      <div class="form-group">
+        <label for="inputLoc">Location</label>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Location"
+        />
+      </div>
+
+      <button type="submit" class="addParty">Add Party</button>
+    `;
+  $form.style.width = "75%";
+  $form.style.margin = "0 auto";
+  $form.addEventListener("submit", addParty);
+
+  return $form;
+};
+
 // === Render ===
 function render() {
   const $app = document.querySelector("#app");
@@ -147,6 +248,7 @@ function render() {
 
   $app.querySelector("PartyList").replaceWith(PartyList());
   $app.querySelector("SelectedParty").replaceWith(SelectedParty());
+  $app.append(setForm());
 }
 
 async function init() {
